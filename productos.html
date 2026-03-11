@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario - ElitePOS</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .form-registro { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .tabla-prod { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        .tabla-prod th, .tabla-prod td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <header><h1>Gestionar Productos</h1></header>
+    <nav style="padding: 10px; text-align: center;">
+        <a href="venta.html" style="text-decoration: none; color: var(--primario); font-weight: bold;">← Volver a Ventas</a>
+    </nav>
+
+    <div class="contenedor">
+        <div class="card">
+    <input type="hidden" id="edit-id"> <input type="text" id="nombreP" placeholder="Nombre del producto">
+    <input type="number" id="precioP" placeholder="Precio $">
+    <input type="number" id="stockP" placeholder="Cantidad en Stock">
+    <button onclick="guardarProducto()" id="btn-guardar">💾 GUARDAR PRODUCTO</button>
+</div>
+
+        <h3>Lista de Productos</h3>
+        <table class="tabla-prod">
+            <thead><tr><th>Producto</th><th>Precio</th></tr></thead>
+            <tbody id="lista-tabla"></tbody>
+        </table>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script src="js/productos.js"></script>
+</body>
+</html>

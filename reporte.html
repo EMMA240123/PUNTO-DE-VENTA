@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - ElitePOS</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header><h1>Corte de Caja</h1></header>
+    
+    <div class="contenedor">
+        <div style="background: var(--oscuro); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+            <p>Venta Total Acumulada</p>
+            <h2 id="gran-total" style="font-size: 2.5rem; margin: 0;">$0.00</h2>
+        </div>
+
+        <h3>Historial de Tickets</h3>
+        <div id="historial-ventas"></div>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script>
+        setTimeout(() => {
+            const tx = db.transaction("ventas", "readonly");
+            const store = tx.objectStore("ventas");
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const ventas = request.result;
+                let sumaTotal = 0;
+                const contenedor = document.getElementById("historial-ventas");
+
+                contenedor.innerHTML = ventas.reverse().map(v => {
+                    sumaTotal += v.total;
+                    return `
+                        <div style="background:white; padding:15px; border-radius:8px; margin-bottom:10px; border-left: 5px solid var(--primario);">
+                            <small>${new Date(v.fecha).toLocaleString()}</small>
+                            <div style="display:flex; justify-content:space-between;">
+                                <strong>Ticket #${v.id}</strong>
+                                <strong>$${v.total.toFixed(2)}</strong>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById("gran-total").innerText = `$${sumaTotal.toFixed(2)}`;
+            };
+        }, 500);
+    </script>
+</body>
+</html>

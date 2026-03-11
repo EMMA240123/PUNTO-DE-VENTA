@@ -1,0 +1,16 @@
+{
+  "name": "ElitePOS - Punto de Venta Profesional",
+  "short_name": "ElitePOS",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#2ecc71",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1162/1162499.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
