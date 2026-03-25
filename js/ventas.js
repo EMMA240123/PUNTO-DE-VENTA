@@ -51,7 +51,6 @@ function agregarAlCarrito(id, nombre, precio) {
     actualizarInterfazCarrito();
 }
 
-// La hacemos global para que el botón del HTML pueda verla
 window.quitarDelCarrito = function(unicoId) {
     carrito = carrito.filter(item => item.unico !== unicoId);
     actualizarInterfazCarrito();
@@ -91,9 +90,9 @@ function actualizarInterfazCarrito() {
     calcularCambio();
 }
 
-// --- FINALIZAR Y COBRAR (CON NUBE) ---
+// --- FINALIZAR Y COBRAR (OPTIMIZADO PARA VELOCIDAD) ---
 
-async function finalizarVenta() {
+function finalizarVenta() {
     if (carrito.length === 0) {
         alert("⚠️ El carrito está vacío");
         return;
@@ -109,7 +108,7 @@ async function finalizarVenta() {
         metodo: metodoPago 
     };
 
-    // 1. GUARDAR EN INDEXEDDB (Local)
+    // 1. GUARDAR EN LOCAL (IndexedDB) - Esto es lo que se hace primero y es rápido
     const tx = db.transaction(["ventas", "productos"], "readwrite");
     tx.objectStore("ventas").add(ventaData);
 
@@ -121,17 +120,15 @@ async function finalizarVenta() {
         }
     });
 
-    // 2. RESPALDO EN FIREBASE (Nube)
-    try {
-        await addDoc(collection(db_nube, "ventas"), ventaData);
-        console.log("Respaldo en la nube exitoso ☁️");
-    } catch (e) {
-        console.error("Error al subir a la nube: ", e);
-    }
+    // 2. RESPALDO EN FIREBASE (Se lanza en segundo plano, sin await)
+    addDoc(collection(db_nube, "ventas"), ventaData)
+        .then(() => console.log("Respaldo en la nube exitoso ☁️"))
+        .catch((e) => console.error("Error al subir a la nube: ", e));
 
+    // 3. FINALIZAR DE INMEDIATO AL COMPLETAR LOCAL
     tx.oncomplete = () => {
-        alert(`¡Venta realizada con ${metodoPago}! ✅ (Sincronizada)`);
-        location.reload();
+        alert(`¡Venta realizada con ${metodoPago}! ✅`);
+        location.reload(); // Esto limpia el carrito y refresca el stock rápido
     };
 }
 
@@ -149,13 +146,8 @@ function calcularCambio() {
     }
 }
 
-// --- ESCUCHADORES DE EVENTOS (Para que el HTML funcione con el módulo) ---
+// --- ESCUCHADORES DE EVENTOS ---
 
-// Escuchar el buscador
 window.addEventListener('filtrar', () => filtrarProductos());
-
-// Escuchar cambios de pago
 window.addEventListener('cambio', () => calcularCambio());
-
-// Conectar el botón COBRAR
 document.getElementById('btn-finalizar-venta').addEventListener('click', () => finalizarVenta());

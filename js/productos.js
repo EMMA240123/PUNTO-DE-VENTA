@@ -4,8 +4,8 @@ import { db_nube, collection, addDoc } from './firebase-config.js';
 // Cargar productos al iniciar
 setTimeout(() => { listarProductos(); }, 500);
 
-// Función para guardar (con respaldo en la nube)
-async function guardarProducto() {
+// Función para guardar (Optimizado para que sea rápido)
+function guardarProducto() {
     const id = document.getElementById("edit-id").value;
     const nombre = document.getElementById("nombreP").value;
     const precio = parseFloat(document.getElementById("precioP").value);
@@ -20,22 +20,20 @@ async function guardarProducto() {
     const producto = { nombre, precio, stock };
     if (id) producto.id = parseInt(id);
 
-    // --- GUARDAR EN LOCAL (IndexedDB) ---
+    // --- 1. GUARDAR EN LOCAL (IndexedDB) - Es casi instantáneo ---
     const tx = db.transaction("productos", "readwrite");
     const store = tx.objectStore("productos");
     store.put(producto);
 
-    // --- RESPALDO EN FIREBASE (Nube) ---
-    try {
-        // Guardamos una copia en la colección "productos_catalogo"
-        await addDoc(collection(db_nube, "productos_catalogo"), producto);
-        console.log("Producto respaldado en la nube ☁️");
-    } catch (e) {
-        console.error("Error al respaldar producto: ", e);
-    }
+    // --- 2. RESPALDO EN FIREBASE (En segundo plano) ---
+    // Quitamos el 'await' para que no detenga el resto del código
+    addDoc(collection(db_nube, "productos_catalogo"), producto)
+        .then(() => console.log("Producto respaldado en la nube ☁️"))
+        .catch((e) => console.error("Error al respaldar producto: ", e));
 
+    // --- 3. FINALIZAR SIN ESPERAR AL INTERNET ---
     tx.oncomplete = () => {
-        alert("¡Producto Guardado en Local y Nube! ✅");
+        alert("¡Producto Guardado! ✅"); 
         location.reload(); 
     };
 }
@@ -87,7 +85,6 @@ function eliminarProducto(id) {
 }
 
 // --- CONECTAR EL BOTÓN DEL HTML ---
-// Usamos el ID que pusimos en el HTML anterior
 const btnGuardar = document.getElementById('btn-guardar-producto');
 if(btnGuardar) {
     btnGuardar.addEventListener('click', guardarProducto);
