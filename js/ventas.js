@@ -37,16 +37,29 @@ function agregarAlCarrito(id, nombre, precio) {
 }
 
 function finalizarVenta() {
-    if (carrito.length === 0) return;
+    if (carrito.length === 0) {
+        alert("⚠️ El carrito está vacío");
+        return;
+    }
+
+    // OBTENEMOS EL MÉTODO DE PAGO DEL SELECTOR
+    const metodoPago = document.getElementById("metodo-pago").value;
 
     const tx = db.transaction(["ventas", "productos"], "readwrite");
     const storeVentas = tx.objectStore("ventas");
     const storeProd = tx.objectStore("productos");
 
-    // Guardar venta
-    storeVentas.add({ fecha: new Date().toISOString(), total: totalVenta, items: carrito });
+    // GUARDAR VENTA INCLUYENDO EL MÉTODO
+    const ventaData = { 
+        fecha: new Date().toISOString(), 
+        total: totalVenta, 
+        items: carrito,
+        metodo: metodoPago // <--- Guardamos si fue Efectivo, Tarjeta, etc.
+    };
 
-    // Descontar Stock
+    storeVentas.add(ventaData);
+
+    // DESCONTAR STOCK REAL EN LA BASE DE DATOS
     carrito.forEach(item => {
         const p = todosProductos.find(prod => prod.id === item.id);
         if(p) {
@@ -56,19 +69,37 @@ function finalizarVenta() {
     });
 
     tx.oncomplete = () => {
-        alert("Venta guardada y stock descontado ✅");
+        alert(`¡Venta realizada con ${metodoPago}! ✅`);
         location.reload();
     };
 }
+
 function calcularCambio() {
     const pagaCon = parseFloat(document.getElementById("paga-con").value) || 0;
     const cambioTxt = document.getElementById("cambio-txt");
     
-    // totalVenta es la variable que ya tienes donde sumas los productos
     if (pagaCon > 0 && pagaCon >= totalVenta) {
         const cambio = pagaCon - totalVenta;
         cambioTxt.innerText = cambio.toFixed(2);
     } else {
         cambioTxt.innerText = "0.00";
+    }
+}
+
+// FUNCIÓN PARA BLOQUEAR/DESBLOQUEAR CAMBIO SEGÚN EL MÉTODO
+function ajustarInterfazPago() {
+    const metodo = document.getElementById('metodo-pago').value;
+    const seccionCambio = document.getElementById('seccion-cambio');
+    const inputPagaCon = document.getElementById('paga-con');
+    
+    if (metodo !== 'Efectivo') {
+        seccionCambio.style.opacity = "0.5";
+        inputPagaCon.disabled = true;
+        inputPagaCon.value = totalVenta.toFixed(2); // Pago exacto
+        document.getElementById('cambio-txt').innerText = "0.00";
+    } else {
+        seccionCambio.style.opacity = "1";
+        inputPagaCon.disabled = false;
+        inputPagaCon.value = "";
     }
 }
