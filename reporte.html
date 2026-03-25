@@ -5,8 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportes - ElitePOS</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Estilos específicos para que el menú se vea profesional en el celular */
+        .navbar {
+            background: #2c3e50; /* Color oscuro profesional */
+            padding: 10px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-around; /* Separa los botones equitativamente */
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 0.85rem; /* Tamaño de letra ideal para celular */
+            display: flex;
+            flex-direction: column; /* Icono arriba, texto abajo */
+            align-items: center;
+            gap: 4px;
+            opacity: 0.8;
+            transition: 0.3s;
+        }
+
+        .nav-link.active {
+            opacity: 1;
+            color: #f1c40f; /* Amarillo para resaltar dónde estás */
+            font-weight: bold;
+        }
+
+        /* Estilo para el contenedor de los reportes para que no choque con el menú */
+        header h1 {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+    </style>
 </head>
 <body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-link"><span>🏠</span>Inicio</a>
+            <a href="venta.html" class="nav-link"><span>🛒</span>Ventas</a>
+            <a href="productos.html" class="nav-link"><span>📦</span>Inventario</a>
+            <a href="reporte.html" class="nav-link active"><span>📊</span>Reportes</a>
+        </div>
+    </nav>
+
     <header><h1>Corte de Caja</h1></header>
     
     <div class="contenedor">
@@ -22,6 +75,9 @@
     <script src="js/db.js"></script>
     <script>
         setTimeout(() => {
+            // Verificamos que la base de datos esté lista
+            if (typeof db === 'undefined') return;
+
             const tx = db.transaction("ventas", "readonly");
             const store = tx.objectStore("ventas");
             const request = store.getAll();
@@ -31,14 +87,15 @@
                 let sumaTotal = 0;
                 const contenedor = document.getElementById("historial-ventas");
 
-                contenedor.innerHTML = ventas.reverse().map(v => {
+                // .reverse() para ver las ventas más recientes primero
+                contenedor.innerHTML = ventas.slice().reverse().map(v => {
                     sumaTotal += v.total;
                     return `
-                        <div style="background:white; padding:15px; border-radius:8px; margin-bottom:10px; border-left: 5px solid var(--primario);">
-                            <small>${new Date(v.fecha).toLocaleString()}</small>
-                            <div style="display:flex; justify-content:space-between;">
-                                <strong>Ticket #${v.id}</strong>
-                                <strong>$${v.total.toFixed(2)}</strong>
+                        <div style="background:white; padding:15px; border-radius:8px; margin-bottom:10px; border-left: 5px solid var(--primario); box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <small style="color: #666;">${new Date(v.fecha).toLocaleString()}</small>
+                            <div style="display:flex; justify-content:space-between; margin-top: 5px;">
+                                <strong style="color: #333;">Ticket #${v.id}</strong>
+                                <strong style="color: var(--primario);">$${v.total.toFixed(2)}</strong>
                             </div>
                         </div>
                     `;

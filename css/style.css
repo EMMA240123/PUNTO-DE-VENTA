@@ -1,16 +1,22 @@
+/* --- VARIABLES GLOBALES --- */
 :root {
     --primario: #2ecc71;
     --oscuro: #2c3e50;
     --gris-luz: #f4f7f6;
     --blanco: #ffffff;
+    --amarillo: #f1c40f;
 }
 
+/* --- ESTILOS BASE --- */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     background-color: var(--gris-luz);
     color: var(--oscuro);
-    padding-bottom: 80px; /* Espacio para el carrito flotante */
+    padding-bottom: 80px; /* Espacio para el carrito flotante o menú inferior */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 header {
@@ -19,15 +25,78 @@ header {
     padding: 1rem;
     text-align: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.contenedor { padding: 15px; }
+.contenedor { 
+    padding: 15px; 
+    width: 100%; 
+    max-width: 500px; 
+    box-sizing: border-box;
+}
 
-/* Tarjetas de Producto */
+/* --- NAVEGACIÓN PROFESIONAL (MODIFICADA) --- */
+.navbar {
+    background-color: var(--oscuro);
+    padding: 8px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column; /* Icono arriba, texto abajo */
+    align-items: center;
+    justify-content: center;
+    width: 25%;
+    gap: 3px;
+    transition: 0.3s ease;
+    opacity: 0.8;
+}
+
+.nav-link span {
+    font-size: 1.3rem; /* Tamaño del emoji */
+}
+
+.nav-link.active {
+    color: var(--amarillo);
+    opacity: 1;
+    border-bottom: 3px solid var(--amarillo);
+    padding-bottom: 2px;
+}
+
+/* --- TARJETAS Y COMPONENTES --- */
+.card {
+    background: var(--blanco);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .grid-productos {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
+    width: 100%;
 }
 
 .card-producto {
@@ -46,18 +115,24 @@ header {
     font-size: 1.2rem;
 }
 
-.btn-add {
+/* --- BOTONES --- */
+button, .btn-add {
     background: var(--primario);
     color: white;
     border: none;
     border-radius: 8px;
-    padding: 10px;
+    padding: 12px;
     width: 100%;
-    margin-top: 10px;
     font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
 }
 
-/* Carrito Flotante */
+button:active, .btn-add:active {
+    filter: brightness(0.9);
+}
+
+/* --- CARRITO FLOTANTE (VENTA) --- */
 .footer-cart {
     position: fixed;
     bottom: 0;
@@ -69,6 +144,7 @@ header {
     justify-content: space-between;
     align-items: center;
     box-sizing: border-box;
+    z-index: 999;
 }
 
 .btn-cobrar {
@@ -79,39 +155,5 @@ header {
     border-radius: 30px;
     font-weight: bold;
     font-size: 1rem;
-}
-:root {
-    --primario: #2ecc71;
-    --oscuro: #2c3e50;
-    --gris-luz: #f4f7f6;
-    --blanco: #ffffff;
-}
-
-body {
-    font-family: 'Segoe UI', sans-serif;
-    background-color: var(--gris-luz);
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.contenedor { padding: 20px; width: 100%; max-width: 500px; }
-
-.card {
-    background: var(--blanco);
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-button {
-    background: var(--primario);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 8px;
-    width: 100%;
-    font-weight: bold;
-    cursor: pointer;
+    width: auto; /* Para que no ocupe todo el ancho en el footer */
 }
