@@ -58,7 +58,7 @@
                 </div>
             </div>
             
-            <button class="btn-cobrar" onclick="finalizarVenta()" 
+            <button class="btn-cobrar" id="btn-finalizar-venta" 
                     style="height: 110px; width: 120px; font-size: 1.1rem; background: #27ae60; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                 COBRAR
             </button>
@@ -66,23 +66,35 @@
     </div>
 
     <script src="js/db.js"></script>
-    <script src="js/ventas.js"></script>
+    <script type="module" src="js/ventas.js"></script>
+
     <script>
+        // Mantenemos estas funciones aquí para que el HTML pueda verlas rápido
         function ajustarInterfazPago() {
             const metodo = document.getElementById('metodo-pago').value;
             const seccionCambio = document.getElementById('seccion-cambio');
             const inputPagaCon = document.getElementById('paga-con');
+            const totalTxt = document.getElementById('total-txt').innerText.replace('$', '');
             
             if (metodo !== 'Efectivo') {
                 seccionCambio.style.opacity = "0.5";
                 inputPagaCon.disabled = true;
-                inputPagaCon.value = document.getElementById('total-txt').innerText.replace('$', '');
+                inputPagaCon.value = totalTxt;
                 document.getElementById('cambio-txt').innerText = "0.00";
             } else {
                 seccionCambio.style.opacity = "1";
                 inputPagaCon.disabled = false;
                 inputPagaCon.value = "";
             }
+        }
+        
+        // Estas funciones se conectarán con el módulo de ventas.js
+        function filtrarProductos() {
+            window.dispatchEvent(new CustomEvent('filtrar'));
+        }
+        
+        function calcularCambio() {
+            window.dispatchEvent(new CustomEvent('cambio'));
         }
     </script>
 </body>

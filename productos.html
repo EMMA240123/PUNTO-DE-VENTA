@@ -20,20 +20,30 @@
 
     <div class="contenedor">
         <div class="card">
-    <input type="hidden" id="edit-id"> <input type="text" id="nombreP" placeholder="Nombre del producto">
-    <input type="number" id="precioP" placeholder="Precio $">
-    <input type="number" id="stockP" placeholder="Cantidad en Stock">
-    <button onclick="guardarProducto()" id="btn-guardar">💾 GUARDAR PRODUCTO</button>
-</div>
+            <input type="hidden" id="edit-id"> 
+            <input type="text" id="nombreP" placeholder="Nombre del producto">
+            <input type="number" id="precioP" placeholder="Precio $">
+            <input type="number" id="stockP" placeholder="Cantidad en Stock">
+            
+            <button id="btn-guardar-producto" style="width: 100%; padding: 15px; background: var(--primario); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                💾 GUARDAR PRODUCTO
+            </button>
+        </div>
 
         <h3>Lista de Productos</h3>
         <table class="tabla-prod">
-            <thead><tr><th>Producto</th><th>Precio</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Precio</th>
+                    <th>Stock</th> </tr>
+            </thead>
             <tbody id="lista-tabla"></tbody>
         </table>
     </div>
 
     <script src="js/db.js"></script>
-    <script src="js/productos.js"></script>
+    
+    <script type="module" src="js/productos.js"></script>
 </body>
 </html>
