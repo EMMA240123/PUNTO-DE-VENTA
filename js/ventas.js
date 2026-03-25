@@ -23,23 +23,46 @@ function filtrarProductos() {
     renderizarProductos(filtrados);
 }
 
+// --- RENDERIZAR CON ALERTAS DE STOCK BAJO ---
 function renderizarProductos(lista) {
     const contenedor = document.getElementById("lista-productos");
-    contenedor.innerHTML = lista.map(p => `
-        <div class="card-producto">
-            <h4>${p.nombre}</h4>
-            <div class="precio">$${p.precio} <br><small>Stock: ${p.stock}</small></div>
-            <button class="btn-add" data-id="${p.id}" data-nombre="${p.nombre}" data-precio="${p.precio}">AGREGAR</button>
-        </div>
-    `).join('');
+    contenedor.innerHTML = lista.map(p => {
+        // Lógica de alerta para la tarjeta
+        const esBajoStock = p.stock < 3;
+        const agotado = p.stock <= 0;
+        
+        // Estilos dinámicos
+        const estiloCard = esBajoStock ? 'border: 2px solid #ff4757; background: #fff5f5;' : '';
+        const badgeAlerta = esBajoStock ? `<br><b style="color: #ff4757; font-size: 0.7rem;">${agotado ? 'AGOTADO ❌' : '¡POCO STOCK! ⚠️'}</b>` : '';
+
+        return `
+            <div class="card-producto" style="${estiloCard}">
+                <h4>${p.nombre}</h4>
+                <div class="precio">
+                    $${p.precio.toFixed(2)} 
+                    <br><small>Stock: ${p.stock}${badgeAlerta}</small>
+                </div>
+                <button class="btn-add" 
+                    ${agotado ? 'disabled style="background:#ccc; cursor:not-allowed;"' : ''} 
+                    data-id="${p.id}" 
+                    data-nombre="${p.nombre}" 
+                    data-precio="${p.precio}">
+                    ${agotado ? 'SIN STOCK' : 'AGREGAR'}
+                </button>
+            </div>
+        `;
+    }).join('');
 
     // Agregar eventos a los nuevos botones
     document.querySelectorAll('.btn-add').forEach(btn => {
-        btn.onclick = () => agregarAlCarrito(
-            parseInt(btn.dataset.id), 
-            btn.dataset.nombre, 
-            parseFloat(btn.dataset.precio)
-        );
+        btn.onclick = () => {
+            if (btn.disabled) return;
+            agregarAlCarrito(
+                parseInt(btn.dataset.id), 
+                btn.dataset.nombre, 
+                parseFloat(btn.dataset.precio)
+            );
+        };
     });
 }
 
@@ -84,13 +107,14 @@ function actualizarInterfazCarrito() {
     
     const metodo = document.getElementById('metodo-pago').value;
     if (metodo !== 'Efectivo') {
-        document.getElementById('paga-con').value = totalVenta.toFixed(2);
+        const inputPaga = document.getElementById('paga-con');
+        if(inputPaga) inputPaga.value = totalVenta.toFixed(2);
     }
     
     calcularCambio();
 }
 
-// --- FINALIZAR Y COBRAR (OPTIMIZADO PARA VELOCIDAD) ---
+// --- FINALIZAR Y COBRAR (OPTIMIZADO PARA VELOCIDAD Y NUBE) ---
 
 function finalizarVenta() {
     if (carrito.length === 0) {
@@ -108,10 +132,11 @@ function finalizarVenta() {
         metodo: metodoPago 
     };
 
-    // 1. GUARDAR EN LOCAL (IndexedDB) - Esto es lo que se hace primero y es rápido
+    // 1. GUARDAR EN LOCAL (IndexedDB)
     const tx = db.transaction(["ventas", "productos"], "readwrite");
     tx.objectStore("ventas").add(ventaData);
 
+    // Descontar stock localmente
     carrito.forEach(item => {
         const p = todosProductos.find(prod => prod.id === item.id);
         if(p) {
@@ -120,23 +145,26 @@ function finalizarVenta() {
         }
     });
 
-    // 2. RESPALDO EN FIREBASE (Se lanza en segundo plano, sin await)
+    // 2. RESPALDO EN FIREBASE (Se lanza en segundo plano)
     addDoc(collection(db_nube, "ventas"), ventaData)
         .then(() => console.log("Respaldo en la nube exitoso ☁️"))
         .catch((e) => console.error("Error al subir a la nube: ", e));
 
-    // 3. FINALIZAR DE INMEDIATO AL COMPLETAR LOCAL
+    // 3. FINALIZAR AL COMPLETAR LOCAL
     tx.oncomplete = () => {
         alert(`¡Venta realizada con ${metodoPago}! ✅`);
-        location.reload(); // Esto limpia el carrito y refresca el stock rápido
+        location.reload(); 
     };
 }
 
 // --- FUNCIONES DE APOYO ---
 
 function calcularCambio() {
-    const pagaCon = parseFloat(document.getElementById("paga-con").value) || 0;
+    const pagaConInput = document.getElementById("paga-con");
     const cambioTxt = document.getElementById("cambio-txt");
+    if(!pagaConInput || !cambioTxt) return;
+
+    const pagaCon = parseFloat(pagaConInput.value) || 0;
     
     if (pagaCon > 0 && pagaCon >= totalVenta) {
         const cambio = pagaCon - totalVenta;
@@ -150,4 +178,8 @@ function calcularCambio() {
 
 window.addEventListener('filtrar', () => filtrarProductos());
 window.addEventListener('cambio', () => calcularCambio());
-document.getElementById('btn-finalizar-venta').addEventListener('click', () => finalizarVenta());
+
+const btnFinalizar = document.getElementById('btn-finalizar-venta');
+if(btnFinalizar) {
+    btnFinalizar.addEventListener('click', () => finalizarVenta());
+}
