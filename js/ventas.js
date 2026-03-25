@@ -30,11 +30,54 @@ function renderizarProductos(lista) {
     `).join('');
 }
 
+// --- LÓGICA DEL CARRITO (ACTUALIZADA) ---
+
 function agregarAlCarrito(id, nombre, precio) {
-    carrito.push({ id, nombre, precio });
-    totalVenta += precio;
-    document.getElementById("total-txt").innerText = `$${totalVenta.toFixed(2)}`;
+    // Usamos Date.now() como ID único para cada entrada en el carrito
+    const item = { id, nombre, precio, unico: Date.now() };
+    carrito.push(item);
+    actualizarInterfazCarrito();
 }
+
+function quitarDelCarrito(unicoId) {
+    // Filtramos el carrito para quitar solo el elemento con ese ID único
+    carrito = carrito.filter(item => item.unico !== unicoId);
+    actualizarInterfazCarrito();
+}
+
+function actualizarInterfazCarrito() {
+    const contenedor = document.getElementById("detalle-carrito");
+    const totalTxt = document.getElementById("total-txt");
+    
+    if (carrito.length === 0) {
+        contenedor.innerHTML = `<p style="margin: 0; font-size: 0.8rem; color: #999; text-align: center;">Carrito vacío 🛒</p>`;
+        totalVenta = 0;
+    } else {
+        totalVenta = carrito.reduce((sum, item) => sum + item.precio, 0);
+        
+        contenedor.innerHTML = carrito.map(item => `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; background: white; padding: 5px 8px; border-radius: 5px; border: 1px solid #eee;">
+                <span style="font-size: 0.85rem; font-weight: 500;">${item.nombre}</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-weight: bold; color: var(--oscuro);">$${item.precio.toFixed(2)}</span>
+                    <button onclick="quitarDelCarrito(${item.unico})" style="background: #ff4757; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    totalTxt.innerText = `$${totalVenta.toFixed(2)}`;
+    
+    // Si el pago no es efectivo, actualizamos el input de "Paga con" automáticamente
+    const metodo = document.getElementById('metodo-pago').value;
+    if (metodo !== 'Efectivo') {
+        document.getElementById('paga-con').value = totalVenta.toFixed(2);
+    }
+    
+    calcularCambio();
+}
+
+// --- FINALIZAR Y COBRAR ---
 
 function finalizarVenta() {
     if (carrito.length === 0) {
@@ -42,24 +85,24 @@ function finalizarVenta() {
         return;
     }
 
-    // OBTENEMOS EL MÉTODO DE PAGO DEL SELECTOR
     const metodoPago = document.getElementById("metodo-pago").value;
-
     const tx = db.transaction(["ventas", "productos"], "readwrite");
     const storeVentas = tx.objectStore("ventas");
     const storeProd = tx.objectStore("productos");
 
-    // GUARDAR VENTA INCLUYENDO EL MÉTODO
+    // Guardamos la venta (limpiamos el ID único antes de guardar para no ensuciar la DB)
+    const itemsParaGuardar = carrito.map(({id, nombre, precio}) => ({id, nombre, precio}));
+    
     const ventaData = { 
         fecha: new Date().toISOString(), 
         total: totalVenta, 
-        items: carrito,
-        metodo: metodoPago // <--- Guardamos si fue Efectivo, Tarjeta, etc.
+        items: itemsParaGuardar,
+        metodo: metodoPago 
     };
 
     storeVentas.add(ventaData);
 
-    // DESCONTAR STOCK REAL EN LA BASE DE DATOS
+    // Descontar Stock
     carrito.forEach(item => {
         const p = todosProductos.find(prod => prod.id === item.id);
         if(p) {
@@ -86,7 +129,6 @@ function calcularCambio() {
     }
 }
 
-// FUNCIÓN PARA BLOQUEAR/DESBLOQUEAR CAMBIO SEGÚN EL MÉTODO
 function ajustarInterfazPago() {
     const metodo = document.getElementById('metodo-pago').value;
     const seccionCambio = document.getElementById('seccion-cambio');
@@ -95,11 +137,12 @@ function ajustarInterfazPago() {
     if (metodo !== 'Efectivo') {
         seccionCambio.style.opacity = "0.5";
         inputPagaCon.disabled = true;
-        inputPagaCon.value = totalVenta.toFixed(2); // Pago exacto
+        inputPagaCon.value = totalVenta.toFixed(2);
         document.getElementById('cambio-txt').innerText = "0.00";
     } else {
         seccionCambio.style.opacity = "1";
         inputPagaCon.disabled = false;
         inputPagaCon.value = "";
+        document.getElementById('cambio-txt').innerText = "0.00";
     }
 }

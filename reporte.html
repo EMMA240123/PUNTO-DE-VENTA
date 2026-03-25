@@ -6,47 +6,54 @@
     <title>Reportes - ElitePOS</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Estilos específicos para que el menú se vea profesional en el celular */
         .navbar {
-            background: #2c3e50; /* Color oscuro profesional */
+            background: #2c3e50;
             padding: 10px 0;
             position: sticky;
             top: 0;
             z-index: 1000;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-
         .nav-container {
             display: flex;
-            justify-content: space-around; /* Separa los botones equitativamente */
+            justify-content: space-around;
             align-items: center;
             max-width: 600px;
             margin: 0 auto;
         }
-
         .nav-link {
             color: white;
             text-decoration: none;
-            font-size: 0.85rem; /* Tamaño de letra ideal para celular */
+            font-size: 0.85rem;
             display: flex;
-            flex-direction: column; /* Icono arriba, texto abajo */
+            flex-direction: column;
             align-items: center;
             gap: 4px;
             opacity: 0.8;
             transition: 0.3s;
         }
-
         .nav-link.active {
             opacity: 1;
-            color: #f1c40f; /* Amarillo para resaltar dónde estás */
+            color: #f1c40f;
             font-weight: bold;
         }
-
-        /* Estilo para el contenedor de los reportes para que no choque con el menú */
         header h1 {
             margin-top: 20px;
             text-align: center;
             font-size: 1.5rem;
+        }
+        /* Estilo para las nuevas tarjetas de totales */
+        .resumen-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .card-total {
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
         }
     </style>
 </head>
@@ -63,10 +70,23 @@
     <header><h1>Corte de Caja</h1></header>
     
     <div class="contenedor">
-        <div style="background: var(--oscuro); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
-            <p>Venta Total Acumulada</p>
-            <h2 id="gran-total" style="font-size: 2.5rem; margin: 0;">$0.00</h2>
+        <div style="background: var(--oscuro); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px;">
+            <p style="margin: 0; opacity: 0.8;">Venta Total Acumulada</p>
+            <h2 id="gran-total" style="font-size: 2.5rem; margin: 5px 0;">$0.00</h2>
         </div>
+
+        <div class="resumen-grid">
+            <div class="card-total" style="background: #27ae60;">
+                <small>💵 Efectivo</small>
+                <div id="total-efectivo" style="font-size: 1.2rem; font-weight: bold;">$0.00</div>
+            </div>
+            <div class="card-total" style="background: #2980b9;">
+                <small>💳 Banco/Trans.</small>
+                <div id="total-banco" style="font-size: 1.2rem; font-weight: bold;">$0.00</div>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">
 
         <h3>Historial de Tickets</h3>
         <div id="historial-ventas"></div>
@@ -75,7 +95,6 @@
     <script src="js/db.js"></script>
     <script>
         setTimeout(() => {
-            // Verificamos que la base de datos esté lista
             if (typeof db === 'undefined') return;
 
             const tx = db.transaction("ventas", "readonly");
@@ -85,23 +104,42 @@
             request.onsuccess = () => {
                 const ventas = request.result;
                 let sumaTotal = 0;
+                let sumaEfectivo = 0;
+                let sumaBanco = 0;
+
                 const contenedor = document.getElementById("historial-ventas");
 
-                // .reverse() para ver las ventas más recientes primero
                 contenedor.innerHTML = ventas.slice().reverse().map(v => {
                     sumaTotal += v.total;
+                    
+                    // Sumar según el método guardado
+                    if (v.metodo === "Efectivo") {
+                        sumaEfectivo += v.total;
+                    } else {
+                        sumaBanco += v.total; // Tarjeta o Transferencia
+                    }
+
+                    // Definir emoji según método para el historial
+                    let emoji = v.metodo === "Efectivo" ? "💵" : (v.metodo === "Tarjeta" ? "💳" : "📲");
+
                     return `
-                        <div style="background:white; padding:15px; border-radius:8px; margin-bottom:10px; border-left: 5px solid var(--primario); box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <small style="color: #666;">${new Date(v.fecha).toLocaleString()}</small>
+                        <div style="background:white; padding:15px; border-radius:8px; margin-bottom:10px; border-left: 5px solid ${v.metodo === 'Efectivo' ? '#27ae60' : '#2980b9'}; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <small style="color: #666;">${new Date(v.fecha).toLocaleString()}</small>
+                                <span title="${v.metodo}">${emoji}</span>
+                            </div>
                             <div style="display:flex; justify-content:space-between; margin-top: 5px;">
                                 <strong style="color: #333;">Ticket #${v.id}</strong>
-                                <strong style="color: var(--primario);">$${v.total.toFixed(2)}</strong>
+                                <strong style="color: #2c3e50;">$${v.total.toFixed(2)}</strong>
                             </div>
                         </div>
                     `;
                 }).join('');
 
+                // Actualizar los números en pantalla
                 document.getElementById("gran-total").innerText = `$${sumaTotal.toFixed(2)}`;
+                document.getElementById("total-efectivo").innerText = `$${sumaEfectivo.toFixed(2)}`;
+                document.getElementById("total-banco").innerText = `$${sumaBanco.toFixed(2)}`;
             };
         }, 500);
     </script>
