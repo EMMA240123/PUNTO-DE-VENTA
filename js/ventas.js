@@ -55,20 +55,24 @@ function actualizarInterfazCarrito() {
     } else {
         totalVenta = carrito.reduce((sum, item) => sum + item.precio, 0);
         
+        // Aquí generamos la lista con Nombre y Precio bien alineados
         contenedor.innerHTML = carrito.map(item => `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; background: white; padding: 5px 8px; border-radius: 5px; border: 1px solid #eee;">
-                <span style="font-size: 0.85rem; font-weight: 500;">${item.nombre}</span>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-weight: bold; color: var(--oscuro);">$${item.precio.toFixed(2)}</span>
-                    <button onclick="quitarDelCarrito(${item.unico})" style="background: #ff4757; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; background: white; padding: 8px; border-radius: 6px; border: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display: flex; flex-direction: column; flex: 1;">
+                    <span style="font-size: 0.9rem; font-weight: bold; color: var(--oscuro);">${item.nombre}</span>
+                    <span style="font-size: 0.8rem; color: var(--primario); font-weight: 600;">$${item.precio.toFixed(2)}</span>
                 </div>
+                <button onclick="quitarDelCarrito(${item.unico})" 
+                        style="background: #ff4757; color: white; border: none; border-radius: 6px; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                    ✕
+                </button>
             </div>
         `).join('');
     }
     
     totalTxt.innerText = `$${totalVenta.toFixed(2)}`;
     
-    // Si el pago no es efectivo, actualizamos el input de "Paga con" automáticamente
+    // Actualizar input de pago si no es efectivo
     const metodo = document.getElementById('metodo-pago').value;
     if (metodo !== 'Efectivo') {
         document.getElementById('paga-con').value = totalVenta.toFixed(2);
